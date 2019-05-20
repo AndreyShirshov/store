@@ -50,8 +50,11 @@ protected:
 public:
     CommonDialog( QWidget * parent = 0 ) ;
     virtual ~CommonDialog() ;
+
 signals:
     void check_data(bool *pOK) ;
+    void save() ;
+
 };
 
 /**************************************************************/

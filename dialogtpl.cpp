@@ -6,7 +6,7 @@
 
 namespace STORE {
 
-/**************************************************************/
+/*********************************************************************/
 
 ButtonsDlg::ButtonsDlg( QWidget *parent )
     : QFrame(parent) {
@@ -21,13 +21,13 @@ ButtonsDlg::ButtonsDlg( QWidget *parent )
 ButtonsDlg::~ButtonsDlg(){
 }
 
-/**************************************************************/
+/*********************************************************************/
 
 void ButtonsDlg::error_message( const QString & msg ) {
     ui.lblErrorMsg->setText( msg ) ;
 }
 
-/**************************************************************/
+/*********************************************************************/
 
 CommonDialog::CommonDialog( QWidget *parent )
     : QDialog (parent ) {
@@ -59,13 +59,18 @@ void CommonDialog::setCentralFrame(QFrame *central) {
              pButtons, SLOT(error_message(const QString &)) ) ;
 
     connect( this, SIGNAL(check_data(bool*)), pFrame, SLOT(is_good(bool*))) ;
+    connect( this, SIGNAL(save()), pFrame, SLOT(save()) ) ;
 }
 
 void CommonDialog::accept_pressed(){
     bool OK = true ;
     emit check_data( &OK ) ;
-    if ( OK ) accept() ;
+    if( OK ) {
+        emit save() ;
+        accept() ;
+    }
 }
 
-/**************************************************************/
+/*********************************************************************/
+
 } // namespace STORE

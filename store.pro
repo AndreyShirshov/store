@@ -27,15 +27,19 @@ CONFIG += c++11
 SOURCES += \
         main.cpp \
         application.cpp \
+        catalogue.cpp \
         catitemedit.cpp \
         dialogtpl.cpp \
-        mainwindow.cpp
+        mainwindow.cpp \
+        posaction.cpp
 
 HEADERS += \
         application.h \
+        catalogue.h \
         catitemedit.h \
         dialogtpl.h \
-        mainwindow.h
+        mainwindow.h \
+        posaction.h
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
