@@ -1,8 +1,28 @@
 #include "catitemedit.h"
 
+#include <QtSql>
+
 namespace STORE {
 namespace Catalogue {
 namespace Item {
+
+/*********************************************************************/
+
+Data::Data( QObject *parent , QSqlQuery &qry )
+    : QObject ( parent ) {
+
+    Id      = qry.value( "iid"        ) ;
+    Code    = qry.value( "code"       ).toString() ; // Код подраздела
+    Title   = qry.value( "title"      ).toString() ; // Наименование
+    From    = qry.value( "valid_from" ).toDateTime() ; // Действует с .... (дата)
+    To      = qry.value( "valid_to"   ).toDateTime() ; // Закрыт с .... (дата)
+    IsLocal = qry.value( "islocal"    ).toBool() ; // локальный
+    Comment = qry.value( "acomment"   ).toString() ; // Комментарий
+    pParentItem  = 0 ; // Родительский подраздел, пока будет равен нулю
+
+//    "      rid_parent,       \n"
+//    "      alevel,           \n" // Уровенть иерархии
+}
 
 /*********************************************************************/
 

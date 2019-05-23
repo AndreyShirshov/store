@@ -3,6 +3,9 @@
 #include <QAction>
 #include <QMenu>
 
+#include <QtDebug>
+#include <QtSql>
+
 #include "posaction.h"
 
 namespace STORE {
@@ -10,62 +13,90 @@ namespace Catalogue {
 
 /*********************************************************************/
 
-//class PositionedAction: public QAction {
-//    Q_OBJECT
-//}
-
-/*********************************************************************/
-
 Model ::Model( QObject *parent )
     :  QAbstractTableModel( parent ) {
 
+    QSqlQuery qry ;
+    qry.setForwardOnly( true ) ;//  // Включение курсора в режим ForwardOnly
+    qry.prepare(
+        "select                  \n"
+        "      iid,              \n"
+        "      code,             \n"
+        "      title,            \n"
+        "      valid_from,       \n"
+        "      valid_to,         \n"
+        "      islocal,          \n"
+        "      acomment,         \n"
+        "      rid_parent,       \n"
+        "      alevel            \n"
+        "    from catalogue ;    \n"
+    ) ;
+
+//    qry.prepare("SELECT procedure_name (:parametr)"); // C подготовкой
+//    qry.bindValue(":parametr",myValue); // Запрос с параметрами
+
+//    qry.exec() ;
+    if ( qry.exec() ) { // Выполняем запрос к базе и устанавливает курсор перед первой записью множества
+        while ( qry.next() ) {
+            Item::Data *D = new Item::Data( this, qry ) ;
+            Cat.append( D ) ;
+        }
+    } else {
+//        qCritical() << "Cannot execute query" ;
+        QSqlError Err = qry.lastError() ;
+        qCritical() << Err.nativeErrorCode() ; // Код ошибки полученной от родной библиотеки
+        qCritical() << Err.databaseText().toUtf8().data() ; //Текст ошибки полученой от базы данных
+        qCritical() << Err.driverText().toUtf8().data() ; // Текст ошибки полученной от драйвера
+//        qDebug() << qry.executedQuery().toUtf8().data() ; // Смотрим текст запроса
+    }
+
     // TODO Это тестовый каталог, заменить на настоящий
-    {
-        Item::Data *D = new Item::Data( this ) ;
-        D->Code = "111" ; // Код подраздела
-        D->Title = "Физика" ; // Наименование
-        D->From  = QDateTime::currentDateTime() ; // Действует с .... (дата) текущая
-        D->To =QDateTime(); // Закрыт с .... (дата) пусто
-        D->IsLocal = false ; // локальный
-        Cat.append(D) ;
-     }
-    {
-        Item::Data *D = new Item::Data( this ) ;
-        D->Code = "222" ; // Код подраздела
-        D->Title = "Математика" ; // Наименование
-        D->From  = QDateTime::currentDateTime() ; // Действует с .... (дата) текущая
-        D->To =QDateTime(); // Закрыт с .... (дата) пусто
-        D->IsLocal = false ; // локальный
-        Cat.append(D) ;
-     }
-    {
-        Item::Data *D = new Item::Data( this ) ;
-        D->Code = "333" ; // Код подраздела
-        D->Title = "Биология" ; // Наименование
-        D->From  = QDateTime::currentDateTime() ; // Действует с .... (дата) текущая
-        D->To =QDateTime(); // Закрыт с .... (дата) пусто
-        D->IsLocal = false ; // локальный
-        Cat.append(D) ;
-     }
-    {
-        Item::Data *D = new Item::Data( this ) ;
-        D->Code = "444" ; // Код подраздела
-        D->Title = "Валеология" ; // Наименование
-        D->From  = QDateTime::currentDateTime() ; // Действует с .... (дата) текущая
-        D->To =QDateTime(); // Закрыт с .... (дата) пусто
-        D->IsLocal = true ; // локальный
-        Cat.append(D) ;
-     }
-    {
-        Item::Data *D = new Item::Data( this ) ;
-        D->Code = "555" ; // Код подраздела
-        D->Title = "Литература" ; // Наименование
-        D->From  = QDateTime::currentDateTime() ; // Действует с .... (дата) текущая
-        D->To =QDateTime(); // Закрыт с .... (дата) пусто
-        D->IsLocal = false ; // локальный
-        D->Comment = "Проверить правильность" ; // Комментарий
-        Cat.append(D) ;
-     }
+//    {
+//        Item::Data *D = new Item::Data( this ) ;
+//        D->Code = "111" ; // Код подраздела
+//        D->Title = "Физика" ; // Наименование
+//        D->From  = QDateTime::currentDateTime() ; // Действует с .... (дата) текущая
+//        D->To =QDateTime(); // Закрыт с .... (дата) пусто
+//        D->IsLocal = false ; // локальный
+//        Cat.append(D) ;
+//     }
+//    {
+//        Item::Data *D = new Item::Data( this ) ;
+//        D->Code = "222" ; // Код подраздела
+//        D->Title = "Математика" ; // Наименование
+//        D->From  = QDateTime::currentDateTime() ; // Действует с .... (дата) текущая
+//        D->To =QDateTime(); // Закрыт с .... (дата) пусто
+//        D->IsLocal = false ; // локальный
+//        Cat.append(D) ;
+//     }
+//    {
+//        Item::Data *D = new Item::Data( this ) ;
+//        D->Code = "333" ; // Код подраздела
+//        D->Title = "Биология" ; // Наименование
+//        D->From  = QDateTime::currentDateTime() ; // Действует с .... (дата) текущая
+//        D->To =QDateTime(); // Закрыт с .... (дата) пусто
+//        D->IsLocal = false ; // локальный
+//        Cat.append(D) ;
+//     }
+//    {
+//        Item::Data *D = new Item::Data( this ) ;
+//        D->Code = "444" ; // Код подраздела
+//        D->Title = "Валеология" ; // Наименование
+//        D->From  = QDateTime::currentDateTime() ; // Действует с .... (дата) текущая
+//        D->To =QDateTime(); // Закрыт с .... (дата) пусто
+//        D->IsLocal = true ; // локальный
+//        Cat.append(D) ;
+//     }
+//    {
+//        Item::Data *D = new Item::Data( this ) ;
+//        D->Code = "555" ; // Код подраздела
+//        D->Title = "Литература" ; // Наименование
+//        D->From  = QDateTime::currentDateTime() ; // Действует с .... (дата) текущая
+//        D->To =QDateTime(); // Закрыт с .... (дата) пусто
+//        D->IsLocal = false ; // локальный
+//        D->Comment = "Проверить правильность" ; // Комментарий
+//        Cat.append(D) ;
+//     }
 
 }
 

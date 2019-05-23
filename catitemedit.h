@@ -7,11 +7,14 @@
 
 #include "ui_catitemframe.h"
 
+class QSqlQuery ;
+
 namespace STORE {
 namespace Catalogue {
 namespace Item {
 
 /*********************************************************************/
+// Класс данных, данные упрощённо в public
 
 class Data : public QObject {
 
@@ -19,7 +22,9 @@ class Data : public QObject {
 
 public:
     Data(QObject *parent = 0 ) : QObject(parent) {}
+    Data(QObject *parent, QSqlQuery &qry ) ;
     // Пиктограмма
+    QVariant  Id           ;
     QString   Code         ; // Код подраздела
     QString   Title        ; // Наименование
     QDateTime From         ; // Действует с .... (дата)
@@ -27,7 +32,6 @@ public:
     bool      IsLocal      ; // локальный
     QString   Comment      ; // Комментарий
     Data      *pParentItem ; // (Родительский подраздел), пока будет равен нулю
-    // (ID)
 };
 
 /*********************************************************************/
