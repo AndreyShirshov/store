@@ -21,8 +21,10 @@ class Data : public QObject {
     Q_OBJECT
 
 public:
-    Data(QObject *parent = 0 ) : QObject(parent) {}
+    Data(QObject *parent = 0 ) :
+        QObject(parent) , IsLocal(true) , pParentItem(0) , Deleted(false) {}
     Data(QObject *parent, QSqlQuery &qry ) ;
+public:
     // Пиктограмма
     QVariant  Id           ;
     QString   Code         ; // Код подраздела
@@ -32,6 +34,9 @@ public:
     bool      IsLocal      ; // локальный
     QString   Comment      ; // Комментарий
     Data      *pParentItem ; // (Родительский подраздел), пока будет равен нулю
+    bool      Deleted      ; // Элемент помечен на удаление
+public:
+    bool isActive() const ; // Активный элемент
 };
 
 /*********************************************************************/

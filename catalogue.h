@@ -28,7 +28,11 @@ private:
 protected:
     virtual QVariant    dataDisplay( const QModelIndex &I ) const ;
     virtual QVariant    dataTextAlignment( const QModelIndex &I ) const ;
-    virtual Item::Data *dataDataBlock( const QModelIndex &I ) const ;
+    virtual QVariant    dataForeground( const QModelIndex &I ) const ; // Для отображения цвета
+    virtual QVariant    dataFont( const QModelIndex &I ) const ; // Для отображения зачёркнутого текста
+    virtual QVariant    dataToolTipe( const QModelIndex &I ) const ; // Для отображение всплывающей подсказки
+    virtual Item::Data *dataDataBlock( const QModelIndex &I ) const ; // Блок данных
+
 
 public:
     Model( QObject *parent = 0 ) ;
@@ -43,7 +47,9 @@ public:
                          Qt::Orientation orientation, int role ) const ; // Заголовки
 
 public slots:
-    void editItem( const QModelIndex &I, QWidget *parent = 0 ) ; // Редактирование (аргументы - какой параметр редактировать, на каком виджете показывать)
+    void editItem( const QModelIndex &I     , QWidget *parent = 0 ) ; // Редактирование (аргументы - какой параметр редактировать, на каком виджете показывать)
+    void newItem( const QModelIndex &parentI, QWidget *parent = 0 ) ; // Добавление нового элемента
+    void delItem( const QModelIndex &I      , QWidget *parent = 0 ) ; // Удаление элемента списка
 
 } ;
 
@@ -55,6 +61,9 @@ class TableView : public QTableView {
 
 private:
     PosAction *actEditItem ;
+    PosAction *actNewItem  ; // PosAction, потому что надо указывать родителя
+    PosAction *actDelItem  ; // Удаление
+
 
 public:
     TableView( QWidget * parent = 0 ) ;

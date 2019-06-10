@@ -136,8 +136,8 @@ QVariant Model::dataDisplay( const QModelIndex &I ) const {
     switch ( I.column()) {
     case 0 : return D->Code ;
     case 1 : return D->Title ;
-    case 2 : return D->From ;
-    case 3 : return D->To ;
+    case 2 : return D->From.isValid() ? D->From.toString("dd.MM.yyyy") : "" ;
+    case 3 : return D->To.isValid() ? D->To.toString("dd.MM.yyyy") : "" ;
     case 4 : return D->IsLocal ? tr ("LOCAL") : QString() ;
     case 5 : return D->Comment.isEmpty() ? QString() : tr("CMT") ;
     default : return QVariant() ;
@@ -150,13 +150,50 @@ QVariant Model::dataTextAlignment( const QModelIndex &I ) const {
     return Result ;
 }
 
+QVariant Model::dataFont(const QModelIndex &I) const {
+    Item::Data *D = dataDataBlock(I) ;
+    if( !D ) return QVariant() ; //Использовать значение по умолчанию
+    QFont F ; // Шрифт
+    if( D->Deleted ) F.setStrikeOut( true) ; // Сделать зачёркнутым
+    //F.setItalic( true ) ; Выделение остальных курсивом
+    return F ;
+}
 
-// Функция data() Возвращает данные данного элемента
+QVariant Model::dataForeground(const QModelIndex &I) const { // Цвет шрифта
+    Item::Data *D = dataDataBlock(I) ;
+    if( ! D ) return QVariant() ; //Использовать значение по умолчанию
+    QColor Result = D->IsLocal ? QColor( "blue" ) : QColor( "black" ) ;
+    if( ! D->isActive() ) Result.setAlphaF( 1.0/3.0) ; // Прозрачность
+    return Result ;
+}
 
+QVariant Model::dataToolTipe( const QModelIndex &I) const { // Всплывающая подсказка
+    Item::Data *D = dataDataBlock(I) ;
+    if( ! D ) return QVariant() ; // Если пустой, использовать значение по умолчанию
+    switch( I.column() ) {
+    case 2 : {
+        if( ! D->To.isValid() ) return QVariant() ; // Срок действия никогда не истекает
+        return tr("Valid to: %1").arg(D->To.toString("dd.MM.yyyy") ) ; // Возвращаем отформатированную дату закрытия
+    }
+    default: return QVariant() ;
+    }
+}
+
+/*----------Функция data() Возвращает данные данного элемента--------*/
 QVariant Model::data( const QModelIndex &I, int role ) const {
     switch ( role ) {
-    case Qt::DisplayRole       : return dataDisplay( I ) ;
-    case Qt::TextAlignmentRole : return dataTextAlignment( I ) ;
+    case Qt::DisplayRole       : return dataDisplay(I) ;
+    case Qt::TextAlignmentRole : return dataTextAlignment(I) ;
+    case Qt::ForegroundRole    : return dataForeground(I) ; // Для выделения цветом
+    case Qt::FontRole          : return dataFont(I) ; // Для выделения зачёркиванием текста
+    case Qt::ToolTipRole       : return dataToolTipe(I) ; // Для всплывающей подсказки
+    //case Qt::UserRole          : return QVariant( dataDataBlock(I) ) ;
+    // Возвращает указатель на соответствующий DataBlock, но передавать в конструктор указатель нельзя, закомментировано
+    case Qt::UserRole+1        : {
+        Item::Data *D = dataDataBlock(I) ;
+        if ( !D ) return false ; // Элемент удалён
+        return D->Deleted ; // Иначе Deleted
+    }
     default : return QVariant() ;
     }
 }
@@ -217,6 +254,50 @@ void Model::editItem( const QModelIndex &I, QWidget *parent ) {
     endResetModel() ; // Разрешение запроса изменения модели
 }
 
+/*-------------------------------------------------------------------*/
+// Удаление (аргументы - какой параметр редактировать, на каком виджете показывать)
+
+void Model::delItem( const QModelIndex &I, QWidget *parent ) {
+    //TODO Спросить у пользователя, уверен ли он, что хочет удалить элемент
+    Item::Data *D = dataDataBlock( I ) ; // Получаем блок данных
+    if ( !D ) return ; // Если блока данных нет, то удалять нечего
+    //TODO Исходим из того , что модель линейна
+    beginResetModel() ; // Блокировка запроса изменения модели
+    if ( D->Id.isNull() || ! D->Id.isValid() ) { // Если элемент новый
+        Cat.removeAt( I.row() ) ; // Удаляем строку модели
+        delete D ; // Удаляем данные строки
+    } else {
+        D->Deleted = ! D->Deleted ; // Помечен на удаление или не помечен (инверсия true or false)
+    }
+    endResetModel() ; // Разрешение запроса изменения модели
+}
+
+/*-------------------------------------------------------------------*/
+// Добавление нового элемента (аргументы - какой родитель, на каком виджете показывать)
+
+void Model::newItem( const QModelIndex &parentI, QWidget *parent ) {
+
+    if ( parentI.isValid() ) {
+        // TODO: Сделать добавление нового элемента необязательно в корень каталога
+        qWarning() << "Cannot add non-toplevel item" ;
+        return ;
+    }
+    Item::Data *D = new Item::Data( this ) ;
+    if ( !D ) {
+        qWarning() << "Cannot create new item" ;
+        return ; // Если блока данных нет, то редактировать нечего
+    }
+    Item::Dialog Dia ( parent ) ;
+    Dia.setDataBlock( D ) ;
+    if( Dia.exec() == QDialog::Accepted ) {
+    beginResetModel() ; // Блокировка запроса изменения модели
+    Cat.append( D ) ;
+    endResetModel() ; // Разрешение запроса изменения модели
+    } else {
+        delete D ; // если пользователь нажал на cansel, вновь созданный объект надо убить
+    }
+}
+
 /*********************************************************************/
 
 TableView::TableView( QWidget * parent )
@@ -239,6 +320,22 @@ TableView::TableView( QWidget * parent )
     }
 
     {
+        PosAction *A = actNewItem = new PosAction( this ) ; // Создание наследуемого от QAction экшена для создания
+        A->setText( tr("Add") ) ;
+        connect( A, SIGNAL(editItem(QModelIndex, QWidget*)),
+                 M, SLOT(newItem(QModelIndex, QWidget*)) ) ;
+        addAction( A ) ;
+    }
+
+    {
+        PosAction *A = actDelItem = new PosAction( this ) ; // Создание наследуемого от QAction экшена для удаления
+        A->setText( tr("Delete") ) ;
+        connect( A, SIGNAL(editItem(QModelIndex, QWidget*)),
+                 M, SLOT(delItem(QModelIndex, QWidget*)) ) ;
+        addAction( A ) ;
+    }
+
+    {
         QHeaderView *H = verticalHeader() ;
         H->setSectionResizeMode( QHeaderView::ResizeToContents ) ;
     }{
@@ -246,6 +343,9 @@ TableView::TableView( QWidget * parent )
         H->setSectionResizeMode( QHeaderView::ResizeToContents ) ; // Для всех
         H->setSectionResizeMode(1, QHeaderView::Stretch ) ; // Для первой колонки Title
     }
+
+    setColumnHidden( 3, true ) ; // Скрываем колонку "To"
+    setColumnHidden( 4, true ) ; // Скрываем колонку "Local"
 
 }
 
@@ -268,7 +368,18 @@ void TableView::contextMenuRequested( const QPoint &p ) {
         actEditItem->I = I ;
         actEditItem->pWidget = this ;
         M.addAction( actEditItem ) ;
+        actDelItem->I = I ;
+        actDelItem->pWidget = this ;
+        if ( I.data( Qt::UserRole+1 ).toBool() ) { // Если элемент удалён
+            actDelItem->setText( tr("Restore") ) ; // Меняем надпись на экшене на Restore
+        } else {
+            actDelItem->setText( tr("Deleted") ) ; // Меняем надпись на экшене на Deleted
+        }
+        M.addAction( actDelItem ) ;
     }
+    actNewItem->I = QModelIndex() ;
+    actNewItem->pWidget = this ;
+    M.addAction( actNewItem ) ;
     M.exec( mapToGlobal( p ) ) ;
 
 }

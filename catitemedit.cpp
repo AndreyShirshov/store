@@ -19,9 +19,23 @@ Data::Data( QObject *parent , QSqlQuery &qry )
     IsLocal = qry.value( "islocal"    ).toBool() ; // локальный
     Comment = qry.value( "acomment"   ).toString() ; // Комментарий
     pParentItem  = 0 ; // Родительский подраздел, пока будет равен нулю
+    Deleted = false ; // Помечен на удаление
 
 //    "      rid_parent,       \n"
 //    "      alevel,           \n" // Уровенть иерархии
+}
+
+/***********Проверка активный не активный элемент*********************/
+bool Data::isActive() const {
+    if( From.isValid() ) {
+        if (From > QDateTime::currentDateTime() )
+            return false ;
+    }
+    if( To.isValid() ) {
+        if( To < QDateTime::currentDateTime() )
+            return false ;
+    }
+    return true ;
 }
 
 /*********************************************************************/
