@@ -24,9 +24,9 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 CONFIG += c++11
 
-SOURCES += \
-        main.cpp \
+SOURCES += main.cpp \
         application.cpp \
+        books.cpp \
         catalogue.cpp \
         catitemedit.cpp \
         dialogtpl.cpp \
@@ -35,6 +35,7 @@ SOURCES += \
 
 HEADERS += \
         application.h \
+        books.h \
         catalogue.h \
         catitemedit.h \
         dialogtpl.h \

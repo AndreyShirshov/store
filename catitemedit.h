@@ -13,6 +13,16 @@ namespace STORE {
 namespace Catalogue {
 namespace Item {
 
+class Data ; // Объявляем для class List
+/*********************************************************************/
+// Класс список дочерних элементов
+
+class List : public QList<Data*> {
+public:
+    List() : QList<Data*>() {}
+    Data *findPointer( int Id ) const ; // Функция в списке находит указатель на блок данных по идентификатору
+} ;
+
 /*********************************************************************/
 // Класс данных, данные упрощённо в public
 
@@ -21,8 +31,8 @@ class Data : public QObject {
     Q_OBJECT
 
 public:
-    Data(QObject *parent = 0 ) :
-        QObject(parent) , IsLocal(true) , pParentItem(0) , Deleted(false) {}
+    Data(QObject *parent = nullptr ) :
+        QObject(parent) , IsLocal(true) , pParentItem(nullptr) , Deleted(false), Changed(false) {}
     Data(QObject *parent, QSqlQuery &qry ) ;
 public:
     // Пиктограмма
@@ -35,9 +45,13 @@ public:
     QString   Comment      ; // Комментарий
     Data      *pParentItem ; // (Родительский подраздел), пока будет равен нулю
     bool      Deleted      ; // Элемент помечен на удаление
+    List      Children     ; // Список дочерних элементов
+    bool      Changed      ; // Блок данных подвергался редактированию
 public:
-    bool isActive() const ; // Активный элемент
-};
+    bool isActive() const         ; // Активный элемент
+    bool isNew()    const         ; // Новый элемент или нет
+    bool isSameAs(Data *D ) const ; // Возвращает thrue , если данный оъект тот же самый что и указатель на D
+} ;
 
 /*********************************************************************/
 
@@ -46,7 +60,7 @@ class Frame : public QFrame{
     Q_OBJECT
 
 public:
-    Frame( QWidget *parent = 0 ) ;
+    Frame( QWidget *parent = nullptr ) ;
     virtual ~Frame() ;
 
 private:
@@ -76,7 +90,7 @@ private:
     Frame *pFrame ;
 
 public:
-    Dialog( QWidget *parent = 0 ) ;
+    Dialog( QWidget *parent = nullptr ) ;
     virtual ~Dialog() ;
 
 public:

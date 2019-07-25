@@ -7,7 +7,21 @@ namespace Catalogue {
 namespace Item {
 
 /*********************************************************************/
+// Задаём идентификатор элемента, возвращаем указатель
+//(по идентификатору находим поинтер, для распределения элементов по родителям)
+Data *List::findPointer( int Id ) const {
+    Data *D ; // объявляем переменную
+    foreach( D, *this ) { // Перебор всех элементов списка
+        bool OK ;
+        int cId = D->Id.toInt(&OK) ; // Потому что QVariant (ciD - элемент просматриваемый)
+        if( OK && cId == Id ) return D ; // Убедились, что ID целое число
+        Data *R = D->Children.findPointer( Id ) ;
+        if ( R ) return R ; // Если R найден, возвращаем
+    }
+    return nullptr ; // Усли нигего не нашли, возвращаем 0
+}
 
+/*********************************************************************/
 Data::Data( QObject *parent , QSqlQuery &qry )
     : QObject ( parent ) {
 
@@ -18,8 +32,9 @@ Data::Data( QObject *parent , QSqlQuery &qry )
     To      = qry.value( "valid_to"   ).toDateTime() ; // Закрыт с .... (дата)
     IsLocal = qry.value( "islocal"    ).toBool() ; // локальный
     Comment = qry.value( "acomment"   ).toString() ; // Комментарий
-    pParentItem  = 0 ; // Родительский подраздел, пока будет равен нулю
+    pParentItem  = nullptr ; // Родительский подраздел, пока будет равен нулю
     Deleted = false ; // Помечен на удаление
+    Changed = false ; // Данные подвергались редактированию
 
 //    "      rid_parent,       \n"
 //    "      alevel,           \n" // Уровенть иерархии
@@ -39,12 +54,30 @@ bool Data::isActive() const {
 }
 
 /*********************************************************************/
-
+// Функция отличия нового элемента от старого
+bool Data::isNew()const {
+    if( ! Id.isValid() ) return true ;
+    if ( Id.isNull() ) return true ;
+    return false ;
+}
+/*********************************************************************/
+// Функция возвращает thrue , если данный оъект тот же самый что и указатель на D
+// Проверяет, являются ли два элемента Data одинаковыми
+bool Data::isSameAs(Data *D) const {
+    if( isNew() ) {
+        if( ! D->isNew() ) return false ; // Если один новый
+        return property("temp_id") == D->property("temp_id") ;
+    } else {
+        if( D->isNew() ) return false ; // Если один новый
+        return D->Id == Id ;
+    }
+}
+/*********************************************************************/
 Frame::Frame( QWidget *parent )
     : QFrame( parent ) {
 
     ui.setupUi(this) ;
-    Block = 0 ; // По умолчанию
+    Block = nullptr ; // По умолчанию
 }
 
 Frame::~Frame() {
@@ -89,7 +122,7 @@ bool Frame::save() {
     } else {
         Block->To = QDateTime() ;
     }
-
+    Block->Changed = true ; // Данные отредактированы
     return true ;
 }
 
