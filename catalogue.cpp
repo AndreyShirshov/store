@@ -151,7 +151,7 @@ int Model::rowCount(const QModelIndex &parent ) const {
 
 /*-------------------------------------------------------------------*/
 
-int Model::columnCount( const QModelIndex & parent) const {
+int Model::columnCount( const QModelIndex & ) const {
     //if ( ! parent.isValid() )  // Если родитель не существует
         return 6 ; /// TODO Заменить на правильное количество
     //    DATA_PTR(P, parent, 0) ; // Иначе
@@ -399,7 +399,7 @@ void Model::newItem( const QModelIndex &parentI, QWidget *parent ) {
 /*-------------------------------------------------------------------*/
 // Удаление (аргументы - какой параметр редактировать, на каком виджете показывать)
 
-void Model::delItem( const QModelIndex &I, QWidget *parent ) {
+void Model::delItem( const QModelIndex &I, QWidget * ) {
     //TODO Спросить у пользователя, уверен ли он, что хочет удалить элемент
     DATA_PTR(D,I,) ; //Макрос
     //Item::Data *D = dataDataBlock( I ) ; // Получаем блок данных , до макроса
@@ -595,16 +595,16 @@ bool Model::insert_all_to_db( Item::Data *D ) {
             D->To      = INS.value( "valid_to"   ).toDateTime() ;
             D->IsLocal = INS.value( "islocal"    ).toBool()     ;
             D->Comment = INS.value( "acomment"   ).toString()   ;
-            qDebug() << INS.value("iid").isNull()
-                     << INS.value( "rid_parent" ).isNull()
-                     << INS.value("alevel").isNull() ;
-            qDebug() << INS.value("iid")
-                     << INS.value( "rid_parent" )
-                     << INS.value("alevel") ;
-            qDebug() <<  INS.value( "rid_parent" )
-                     << INS.value("alevel") ;
+//            qDebug() << INS.value("iid").isNull()
+//                     << INS.value( "rid_parent" ).isNull()
+//                     << INS.value("alevel").isNull() ;
+//            qDebug() << INS.value("iid")
+//                     << INS.value( "rid_parent" )
+//                     << INS.value("alevel") ;
+//            qDebug() <<  INS.value( "rid_parent" )
+//                     << INS.value("alevel") ;
             D->setProperty( "new_id", INS.value("iid") ) ; // Запишем ID во временное свойство
-            qDebug() << D->property("new_id") ;
+//            qDebug() << D->property("new_id") ;
         }
     }{ // Пробегаемся по дочерним
         Item::List *Children = D ? &(D->Children) : &Cat ; // если нет дочерних Children равен указателю на Cat
@@ -838,6 +838,24 @@ ColumnView::ColumnView( QWidget *parent, Model *xModel )
 ColumnView::~ColumnView() {
 }
 
+/*-------------------------------------------------------------------*/
+
+void ColumnView::currentChanged( const QModelIndex &current,
+                            const QModelIndex &previous ){
+    QColumnView::currentChanged( current, previous ) ; // Вызов функции базового класса
+    if ( ! current.isValid() ) { // если ничего не выбрано
+        emit item_selected( QVariant() ) ;
+    return ;
+    }
+    Item::Data *D = static_cast<Item::Data*>( current.internalPointer() ) ;
+    if (! D ){
+        emit item_selected( QVariant() ) ;
+        return ;
+    }
+    emit item_selected( D->Id ) ;
+//    qDebug() << previous << current ;
+
+}
 /*********************************************************************/
 } // namespace Catalogue
 } // namespace STORE

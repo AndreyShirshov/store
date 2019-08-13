@@ -117,9 +117,16 @@ public:
 class ColumnView : public QColumnView {
     Q_OBJECT
 
+protected:
+    void currentChanged( const QModelIndex &current,
+                         const QModelIndex &previous ) ;
 public:
     ColumnView( QWidget *parent = nullptr, Model *xModel = nullptr ) ;
     virtual ~ColumnView() ;
+
+signals:
+    void item_selected( QVariant id ) ; // отдавать id выбранного элемента
+
 };
 
 /*********************************************************************/

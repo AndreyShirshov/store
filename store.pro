@@ -30,6 +30,7 @@ SOURCES += main.cpp \
         catalogue.cpp \
         catitemedit.cpp \
         dialogtpl.cpp \
+        filter.cpp \
         mainwindow.cpp \
         posaction.cpp
 
@@ -39,6 +40,7 @@ HEADERS += \
         catalogue.h \
         catitemedit.h \
         dialogtpl.h \
+        filter.h \
         mainwindow.h \
         posaction.h
 
@@ -49,4 +51,5 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 FORMS += \
     buttonsframe.ui \
-    catitemframe.ui
+    catitemframe.ui \
+    filter.ui
